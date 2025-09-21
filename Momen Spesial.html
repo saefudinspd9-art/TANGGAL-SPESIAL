@@ -1,0 +1,138 @@
+import { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import confetti from "canvas-confetti";
+
+const events = [
+  { name: "1 Rajab 1447 H", icon: "🕋", date: "2025-12-22", displayDate: "22 Desember 2025", type: "islam" },
+  { name: "Tahun Baru 2026", icon: "🎉", date: "2026-01-01", displayDate: "1 Januari 2026", type: "umum" },
+  { name: "Ulang Tahun Pasangan", icon: "💝", date: "2026-02-11", displayDate: "11 Februari 2026", type: "pribadi" },
+  { name: "1 Ramadan 1448 H", icon: "🌙", date: "2026-02-19", displayDate: "19 Februari 2026", type: "islam" },
+  { name: "1 Syawal 1448 H", icon: "🕌", date: "2026-03-21", displayDate: "21 Maret 2026", type: "islam" },
+  { name: "Hari Jadian", icon: "❤️", date: "2026-06-13", displayDate: "13 Juni 2026", type: "pribadi" },
+];
+
+const cardColors = [
+  "from-blue-600 via-blue-400 to-cyan-400",
+  "from-purple-600 via-pink-500 to-red-400",
+  "from-green-600 via-emerald-400 to-lime-300",
+  "from-yellow-600 via-yellow-400 to-orange-300",
+  "from-pink-600 via-rose-400 to-fuchsia-300",
+  "from-indigo-600 via-indigo-400 to-sky-300",
+];
+
+function getTimeLeft(targetDate) {
+  const now = new Date();
+  const endDate = new Date(targetDate);
+  endDate.setHours(24, 0, 0, 0); // Hitung hingga jam 12 malam hari event
+  const distance = endDate.getTime() - now.getTime();
+  if (distance <= 0) return null;
+  return {
+    days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((distance / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((distance / (1000 * 60)) % 60),
+    seconds: Math.floor((distance / 1000) % 60),
+  };
+}
+
+export default function CountdownApp() {
+  const [timeLeft, setTimeLeft] = useState({});
+  const [celebrated, setCelebrated] = useState({});
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    setDarkMode(hour >= 18 || hour < 6);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const updated = {};
+      events.forEach((event) => {
+        const remaining = getTimeLeft(event.date);
+        updated[event.name] = remaining;
+        if (!remaining && !celebrated[event.name]) {
+          confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+          alert(`🎉 Selamat ${event.name}! ✨`);
+          const audio = new Audio(
+            event.type === 'islam' ? '/sounds/takbir.mp3' : '/sounds/ting.mp3'
+          );
+          audio.play();
+          setCelebrated((prev) => ({ ...prev, [event.name]: true }));
+        }
+      });
+      setTimeLeft(updated);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [celebrated]);
+
+  return (
+    <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} min-h-screen flex flex-col items-center justify-center p-6 font-serif transition-colors duration-500`}> 
+      <h1 className={`${darkMode ? 'text-white' : 'text-gray-900'} text-4xl md:text-5xl font-extrabold mb-10 text-center tracking-wide drop-shadow-lg animate-pulse`}>
+        ✨ Menunggu Hari Spesial ✨
+      </h1>
+      <motion.div 
+        className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl"
+        initial="hidden"
+        animate="visible"
+        variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { staggerChildren: 0.2 } } }}
+      >
+        {events.map((event, i) => (
+          <motion.div
+            key={event.name}
+            whileHover={{ scale: 1.05, rotate: 1 }}
+            whileTap={{ scale: 0.98 }}
+            variants={{ hidden: { opacity: 0, y: 40 }, visible: { opacity: 1, y: 0 } }}
+          >
+            <a href="/" target="_blank" rel="noopener noreferrer">
+              <Card className={`bg-gradient-to-br ${cardColors[i % cardColors.length]} shadow-2xl rounded-3xl border border-white/30 transition duration-500`}> 
+                <CardContent className={`${darkMode ? 'text-white' : 'text-gray-900'} p-6 text-center`}>
+                  <h3 className="text-2xl font-bold mb-2 flex justify-center items-center gap-2 drop-shadow-lg">
+                    <motion.span
+                      animate={{ rotate: [0, 20, -20, 0], scale: [1, 1.3, 1, 1.1, 1] }}
+                      transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                    >
+                      {event.icon}
+                    </motion.span>
+                    {event.name}
+                  </h3>
+                  <p className="italic text-sm mb-6">({event.displayDate})</p>
+                  {timeLeft[event.name] ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 text-lg font-semibold">
+                      <div className="flex flex-col items-center bg-white/20 rounded-lg p-3 shadow-lg">
+                        <span className="text-4xl md:text-5xl font-extrabold animate-pulse">
+                          {timeLeft[event.name].days}
+                        </span>
+                        <span>Hari</span>
+                      </div>
+                      <div className="flex flex-col items-center bg-white/20 rounded-lg p-3 shadow-lg">
+                        <span className="text-4xl md:text-5xl font-extrabold animate-pulse">
+                          {timeLeft[event.name].hours}
+                        </span>
+                        <span>Jam</span>
+                      </div>
+                      <div className="flex flex-col items-center bg-white/20 rounded-lg p-3 shadow-lg">
+                        <span className="text-4xl md:text-5xl font-extrabold animate-pulse">
+                          {timeLeft[event.name].minutes}
+                        </span>
+                        <span>Menit</span>
+                      </div>
+                      <div className="flex flex-col items-center bg-white/20 rounded-lg p-3 shadow-lg">
+                        <span className="text-4xl md:text-5xl font-extrabold animate-pulse">
+                          {timeLeft[event.name].seconds}
+                        </span>
+                        <span>Detik</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-yellow-300 font-medium animate-bounce">✨ Saatnya tiba! ✨</p>
+                  )}
+                </CardContent>
+              </Card>
+            </a>
+          </motion.div>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
